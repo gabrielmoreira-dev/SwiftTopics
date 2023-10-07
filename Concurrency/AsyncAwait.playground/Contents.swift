@@ -256,3 +256,31 @@ Task {
 }
 
 
+// MARK: - Example 8: Problems with cuncurrency
+
+actor BankAccount {
+    private var balance: Decimal
+
+    init(balance: Decimal) {
+        self.balance = balance
+    }
+
+    func withdraw(_ amount: Decimal) {
+        guard balance >= amount else { return }
+
+        let processingTime = UInt32.random(in: 0...3)
+        print("Processing for \(amount) \(processingTime) seconds")
+        sleep(processingTime)
+        balance -= amount
+        print("Withdrawing \(amount) from account. New balance: \(balance)")
+    }
+}
+
+let bankAcoount = BankAccount(balance: 500.0)
+
+/// The tasks execute concurrently, so without actor it results in a balance of -100. This can also be resolved using serial queue or  lock
+DispatchQueue.concurrentPerform(iterations: 2) { _ in
+    Task {
+        await bankAcoount.withdraw(300.0)
+    }
+}
